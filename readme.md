@@ -197,6 +197,23 @@ They are not enabled by default but can be turned on with options.
 It is not a goal of this project to support lots of different extensions.
 It’s instead a goal to support very common and mostly standardized extensions.
 
+### TeX math in this fork
+
+The existing `math_text` and `math_flow` construct switches also enable TeX
+backslash delimiters in this fork:
+
+* inline `\(…\)` in text, including headings, link labels, and table cells;
+* a bare line-start `\[` fence, through an unpaired line-ending `\]`;
+* whole-line `\[…\]` and `$$…$$` displays, interrupting paragraphs;
+* Pandoc-style single-dollar rules, leaving `$5 and $10` and `costs $5-$10`
+  as prose, while `$x$, $y$` and `$5$` are math.
+
+The resulting nodes are the existing `InlineMath` and `Math` nodes. Their source
+spans include the original delimiters. Code, legacy dollar fences, and parsing
+with math disabled keep their upstream behavior. No new options or Cargo
+features are needed. See [the patch ledger](ZEVRIA.md) for the exact syntax,
+compatibility changes, tests, and upstream provenance.
+
 ## Project
 
 `markdown-rs` is maintained as a single monolithic crate.

@@ -53,50 +53,50 @@ fn math_text() -> Result<(), message::Message> {
     );
 
     assert_eq!(
-        to_html_with_options("$$ foo $ bar $$", &math)?,
-        "<p><code class=\"language-math math-inline\">foo $ bar</code></p>",
+        to_html_with_options("a $$ foo $ bar $$", &math)?,
+        "<p>a <code class=\"language-math math-inline\">foo $ bar</code></p>",
         "should support math (text) w/ more dollars"
     );
 
     assert_eq!(
         to_html_with_options("$ $$ $", &math)?,
-        "<p><code class=\"language-math math-inline\">$$</code></p>",
-        "should support math (text) w/ fences inside, and padding"
+        "<p>$ $$ $</p>",
+        "should leave a whitespace-padded single-dollar opener as prose"
     );
 
     assert_eq!(
         to_html_with_options("$  $$  $", &math)?,
-        "<p><code class=\"language-math math-inline\"> $$ </code></p>",
-        "should support math (text) w/ extra padding"
+        "<p>$  $$  $</p>",
+        "should leave extra single-dollar padding as prose"
     );
 
     assert_eq!(
         to_html_with_options("$ a$", &math)?,
-        "<p><code class=\"language-math math-inline\"> a</code></p>",
-        "should support math (text) w/ unbalanced padding"
+        "<p>$ a$</p>",
+        "should require non-whitespace after a single-dollar opener"
     );
 
     assert_eq!(
         to_html_with_options("$\u{a0}b\u{a0}$", &math)?,
-        "<p><code class=\"language-math math-inline\">\u{a0}b\u{a0}</code></p>",
-        "should support math (text) w/ non-padding whitespace"
+        "<p>$\u{a0}b\u{a0}$</p>",
+        "should apply single-dollar flanking to Unicode whitespace"
     );
 
     assert_eq!(
         to_html_with_options("$ $\n$  $", &math)?,
-        "<p><code class=\"language-math math-inline\"> </code>\n<code class=\"language-math math-inline\">  </code></p>",
-        "should support math (text) w/o data"
+        "<p>$ $\n$  $</p>",
+        "should leave whitespace-only single-dollar sequences as prose"
     );
 
     assert_eq!(
-        to_html_with_options("$\nfoo\nbar  \nbaz\n$", &math)?,
+        to_html_with_options("$foo\nbar  \nbaz$", &math)?,
         "<p><code class=\"language-math math-inline\">foo bar   baz</code></p>",
         "should support math (text) w/o line endings (1)"
     );
 
     assert_eq!(
-        to_html_with_options("$\nfoo \n$", &math)?,
-        "<p><code class=\"language-math math-inline\">foo </code></p>",
+        to_html_with_options("$foo \nbar$", &math)?,
+        "<p><code class=\"language-math math-inline\">foo  bar</code></p>",
         "should support math (text) w/o line endings (2)"
     );
 
@@ -113,15 +113,15 @@ fn math_text() -> Result<(), message::Message> {
     );
 
     assert_eq!(
-        to_html_with_options("$$foo$bar$$", &math)?,
-        "<p><code class=\"language-math math-inline\">foo$bar</code></p>",
+        to_html_with_options("a $$foo$bar$$", &math)?,
+        "<p>a <code class=\"language-math math-inline\">foo$bar</code></p>",
         "should support more dollars"
     );
 
     assert_eq!(
         to_html_with_options("$ foo $$ bar $", &math)?,
-        "<p><code class=\"language-math math-inline\">foo $$ bar</code></p>",
-        "should support less dollars"
+        "<p>$ foo $$ bar $</p>",
+        "should not pair a whitespace-padded opener across mixed dollar sequences"
     );
 
     assert_eq!(

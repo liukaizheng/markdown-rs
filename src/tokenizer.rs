@@ -235,6 +235,18 @@ pub struct TokenizeState<'a> {
     // Last error message provided at an EOF of an expression.
     pub mdx_last_parse_error: Option<(String, String, String)>,
 
+    /// Start of the current TeX inline scan and earliest failed scan in this text.
+    pub tex_math_text_start: usize,
+    pub tex_math_text_failed: Option<usize>,
+    /// Single-dollar scans have their own memo (code and multi-dollar math do not).
+    pub math_dollar_start: usize,
+    pub math_dollar_failed: Option<usize>,
+    pub math_dollar_closer_valid: bool,
+    /// TeX display state, separate from raw-flow's shared scratch fields.
+    pub tex_math_flow_marker: u8,
+    pub tex_math_flow_indent: usize,
+    pub tex_math_flow_fenced: bool,
+
     /// Whether to connect events.
     pub connect: bool,
     /// Marker.
@@ -340,6 +352,14 @@ impl<'a> Tokenizer<'a> {
             events: vec![],
             parse_state,
             tokenize_state: TokenizeState {
+                tex_math_text_start: 0,
+                tex_math_text_failed: None,
+                math_dollar_start: 0,
+                math_dollar_failed: None,
+                math_dollar_closer_valid: false,
+                tex_math_flow_marker: 0,
+                tex_math_flow_indent: 0,
+                tex_math_flow_fenced: false,
                 connect: false,
                 document_container_stack: vec![],
                 document_exits: vec![],
@@ -529,8 +549,8 @@ impl<'a> Tokenizer<'a> {
         );
 
         if VOID_EVENTS.iter().any(|d| d == &name) {
-            debug_assert!(
-                current == previous.name,
+            debug_assert_eq!(
+                current, previous.name,
                 "expected event to be void, instead of including something"
             );
         }

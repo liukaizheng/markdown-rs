@@ -145,9 +145,9 @@ pub fn before(tokenizer: &mut Tokenizer) -> State {
         Some(b'\\') => {
             tokenizer.attempt(
                 State::Next(StateName::TextBefore),
-                State::Next(StateName::TextBeforeHardBreakEscape),
+                State::Next(StateName::TextBeforeCharacterEscape),
             );
-            State::Retry(StateName::CharacterEscapeStart)
+            State::Retry(StateName::TexMathTextStart)
         }
         Some(b']') => {
             tokenizer.attempt(
@@ -197,6 +197,15 @@ pub fn before_mdx_jsx(tokenizer: &mut Tokenizer) -> State {
         State::Next(StateName::TextBeforeData),
     );
     State::Retry(StateName::MdxJsxTextStart)
+}
+
+/// Try a Markdown escape after TeX inline math declined the opener.
+pub fn before_character_escape(tokenizer: &mut Tokenizer) -> State {
+    tokenizer.attempt(
+        State::Next(StateName::TextBefore),
+        State::Next(StateName::TextBeforeHardBreakEscape),
+    );
+    State::Retry(StateName::CharacterEscapeStart)
 }
 
 /// Before hard break escape.

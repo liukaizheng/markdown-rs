@@ -194,5 +194,7 @@ pub mod partial_whitespace;
 pub mod raw_flow;
 pub mod raw_text;
 pub mod string;
+pub mod tex_math_flow;
+pub mod tex_math_text;
 pub mod text;
 pub mod thematic_break;

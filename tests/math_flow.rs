@@ -40,8 +40,8 @@ fn math_flow() -> Result<(), message::Message> {
 
     assert_eq!(
         to_html_with_options("$\nfoo\n$", &math)?,
-        "<p><code class=\"language-math math-inline\">foo</code></p>",
-        "should not support math (flow) w/ less than two markers"
+        "<p>$\nfoo\n$</p>",
+        "should leave single-dollar line fences as prose under the flanking rule"
     );
 
     assert_eq!(
@@ -124,8 +124,8 @@ fn math_flow() -> Result<(), message::Message> {
 
     assert_eq!(
         to_html_with_options("$$ $$\naaa", &math)?,
-        "<p><code class=\"language-math math-inline\"> </code>\naaa</p>",
-        "should not support dollars in the opening fence after the opening sequence"
+        "<pre><code class=\"language-math math-display\"> \n</code></pre>\n<p>aaa</p>",
+        "should recognize a whole-line pair of double dollars as a display"
     );
 
     assert_eq!(
@@ -166,8 +166,8 @@ fn math_flow() -> Result<(), message::Message> {
 
     assert_eq!(
         to_html_with_options("$$ aa $$\nfoo", &math)?,
-        "<p><code class=\"language-math math-inline\">aa</code>\nfoo</p>",
-        "should not support dollars in the meta string"
+        "<pre><code class=\"language-math math-display\"> aa \n</code></pre>\n<p>foo</p>",
+        "should keep whole-line double-dollar content separate from the next paragraph"
     );
 
     assert_eq!(

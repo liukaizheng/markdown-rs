@@ -118,6 +118,7 @@
 use crate::event::Name;
 use crate::state::{Name as StateName, State};
 use crate::tokenizer::Tokenizer;
+use crate::util::char::{after_index, before_index};
 
 /// Start of raw (text).
 ///
@@ -147,6 +148,9 @@ pub fn start(tokenizer: &mut Tokenizer) -> State {
             tokenizer.tokenize_state.token_2 = Name::MathTextSequence;
             tokenizer.tokenize_state.token_3 = Name::MathTextData;
         }
+        if marker == b'$' {
+            tokenizer.tokenize_state.math_dollar_start = tokenizer.point.index;
+        }
         tokenizer.tokenize_state.marker = marker;
         tokenizer.enter(tokenizer.tokenize_state.token_1.clone());
         tokenizer.enter(tokenizer.tokenize_state.token_2.clone());
@@ -171,7 +175,19 @@ pub fn sequence_open(tokenizer: &mut Tokenizer) -> State {
     // Not enough markers in the sequence.
     else if tokenizer.tokenize_state.marker == b'$'
         && tokenizer.tokenize_state.size == 1
-        && !tokenizer.parse_state.options.math_text_single_dollar
+        && (!tokenizer.parse_state.options.math_text_single_dollar
+            || tokenizer.current.map_or(true, |b| {
+                b.is_ascii_whitespace()
+                    || (b >= 0x80
+                        && after_index(tokenizer.parse_state.bytes, tokenizer.point.index)
+                            .map_or(false, char::is_whitespace))
+            })
+            || tokenizer
+                .tokenize_state
+                .math_dollar_failed
+                .map_or(false, |failed| {
+                    tokenizer.tokenize_state.math_dollar_start >= failed
+                }))
     {
         tokenizer.tokenize_state.marker = 0;
         tokenizer.tokenize_state.size = 0;
@@ -194,6 +210,10 @@ pub fn sequence_open(tokenizer: &mut Tokenizer) -> State {
 pub fn between(tokenizer: &mut Tokenizer) -> State {
     match tokenizer.current {
         None => {
+            if tokenizer.tokenize_state.marker == b'$' && tokenizer.tokenize_state.size == 1 {
+                tokenizer.tokenize_state.math_dollar_failed =
+                    Some(tokenizer.tokenize_state.math_dollar_start);
+            }
             tokenizer.tokenize_state.marker = 0;
             tokenizer.tokenize_state.size = 0;
             tokenizer.tokenize_state.token_1 = Name::Data;
@@ -209,6 +229,16 @@ pub fn between(tokenizer: &mut Tokenizer) -> State {
         }
         _ => {
             if tokenizer.current == Some(tokenizer.tokenize_state.marker) {
+                tokenizer.tokenize_state.math_dollar_closer_valid =
+                    tokenizer.previous.map_or(false, |b| {
+                        !b.is_ascii_whitespace()
+                            && (b < 0x80
+                                || !before_index(
+                                    tokenizer.parse_state.bytes,
+                                    tokenizer.point.index,
+                                )
+                                .map_or(true, char::is_whitespace))
+                    });
                 tokenizer.enter(tokenizer.tokenize_state.token_2.clone());
                 State::Retry(StateName::RawTextSequenceClose)
             } else {
@@ -250,7 +280,12 @@ pub fn sequence_close(tokenizer: &mut Tokenizer) -> State {
         State::Next(StateName::RawTextSequenceClose)
     } else {
         tokenizer.exit(tokenizer.tokenize_state.token_2.clone());
-        if tokenizer.tokenize_state.size == tokenizer.tokenize_state.size_b {
+        if tokenizer.tokenize_state.size == tokenizer.tokenize_state.size_b
+            && (tokenizer.tokenize_state.marker != b'$'
+                || tokenizer.tokenize_state.size != 1
+                || (tokenizer.tokenize_state.math_dollar_closer_valid
+                    && !tokenizer.current.map_or(false, |b| b.is_ascii_digit())))
+        {
             tokenizer.exit(tokenizer.tokenize_state.token_1.clone());
             tokenizer.tokenize_state.marker = 0;
             tokenizer.tokenize_state.size = 0;

@@ -44,7 +44,14 @@ pub fn start(tokenizer: &mut Tokenizer) -> State {
             );
             State::Retry(StateName::HeadingAtxStart)
         }
-        Some(b'$' | b'`' | b'~') => {
+        Some(b'$') => {
+            tokenizer.attempt(
+                State::Next(StateName::FlowAfter),
+                State::Next(StateName::FlowBeforeTexMathDollar),
+            );
+            State::Retry(StateName::RawFlowStart)
+        }
+        Some(b'`' | b'~') => {
             tokenizer.attempt(
                 State::Next(StateName::FlowAfter),
                 State::Next(StateName::FlowBeforeContent),
@@ -125,9 +132,27 @@ pub fn before_code_indented(tokenizer: &mut Tokenizer) -> State {
 pub fn before_raw(tokenizer: &mut Tokenizer) -> State {
     tokenizer.attempt(
         State::Next(StateName::FlowAfter),
-        State::Next(StateName::FlowBeforeHtml),
+        State::Next(StateName::FlowBeforeTexMath),
     );
     State::Retry(StateName::RawFlowStart)
+}
+
+/// Try a TeX display before the remaining flow constructs.
+pub fn before_tex_math(tokenizer: &mut Tokenizer) -> State {
+    tokenizer.attempt(
+        State::Next(StateName::FlowAfter),
+        State::Next(StateName::FlowBeforeHtml),
+    );
+    State::Retry(StateName::TexMathFlowStart)
+}
+
+/// The dollar fast path must retain its original content fallback.
+pub fn before_tex_math_dollar(tokenizer: &mut Tokenizer) -> State {
+    tokenizer.attempt(
+        State::Next(StateName::FlowAfter),
+        State::Next(StateName::FlowBeforeContent),
+    );
+    State::Retry(StateName::TexMathFlowStart)
 }
 
 /// At html (flow).

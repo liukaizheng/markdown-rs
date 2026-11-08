@@ -1,6 +1,8 @@
 .DS_Store
 *.log
 *.lock
+# Freeze the workspace-only SWC/Serde test toolchain, not library consumers.
+!/Cargo.lock
 coverage/
 target/
 commonmark-data.txt

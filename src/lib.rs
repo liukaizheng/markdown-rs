@@ -29,6 +29,8 @@
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::too_many_lines)]
 #![allow(clippy::result_large_err)]
+// Preserve upstream AST compiler control flow across newer Clippy releases.
+#![allow(clippy::redundant_else)]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/wooorm/markdown-rs/8924580/media/logo-monochromatic.svg?sanitize=true"
 )]

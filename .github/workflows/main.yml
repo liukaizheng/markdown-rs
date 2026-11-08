@@ -17,8 +17,8 @@ jobs:
         with:
           components: clippy, rustfmt
           toolchain: stable
-      - run: cargo fmt --check && cargo clippy --all-features --all-targets --workspace
-      - run: cargo test --all-features --workspace
+      - run: cargo fmt --check && cargo clippy --locked --all-features --all-targets --workspace
+      - run: cargo test --locked --all-features --workspace
 name: main
 on:
   - pull_request
